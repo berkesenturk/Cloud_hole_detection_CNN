@@ -36,7 +36,10 @@ Next steps,
 
 
 ## Authors and acknowledgment
-Dr. Julia Fuchs (Karlsruhe Institute of Technology), Dr. Caroline Arnold (Helmholtz AI), Berke Şentürk (Karlsruhe Institute of Technology) 
+
+- Berke Şentürk (Karlsruhe Institute of Technology) 
+- Dr. Julia Fuchs (Karlsruhe Institute of Technology)
+- Dr. Caroline Arnold (Helmholtz AI)
 
 
 
