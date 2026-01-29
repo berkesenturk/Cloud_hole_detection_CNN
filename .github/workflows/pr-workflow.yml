@@ -13,16 +13,16 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@main
-      - name: Use Python version 3.8
+      - name: Use Python version 3.10
         uses: actions/setup-python@v3
         with:
-          python-version: '3.8'
+          python-version: '3.10'
       - name: Install Flake8
         run: |
           python -m pip install flake8
       - name: Run linting tests
         run: | 
-          flake8 src/model/
+          flake8 src/
 
       - name: Install unittest
         run: |
