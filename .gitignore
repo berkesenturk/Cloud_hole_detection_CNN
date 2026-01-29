@@ -10,7 +10,7 @@ __pycache__/
 
 julia_labels.csv
 paris_label.txt
-
+*.zarr
 
 # C extensions
 *.so

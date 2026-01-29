@@ -1,12 +1,32 @@
---index-url https://download.pytorch.org/whl/cu126
-torch
-torchvision
-torchaudio
-
-transformers==4.47.1
 numpy
-pandas
-xarray
-scikit-learn
-matplotlib
-seaborn
+pandas         
+packaging              
+xarray          
+netCDF4       
+zarr         
+h5netcdf              
+ipykernel
+
+dask[complete]
+distributed         
+dask-expr              
+
+
+# azure-storage-blob>=12.25.0   # Azure Blob Storage (Jan 2026 release)
+# azure-identity>=1.20.0        # Azure authentication
+# azure-storage-file-datalake>=12.17.0  # Data Lake Gen2 support
+# azure-ai-ml>=1.22.0          # Azure ML integration
+# azure-keyvault-secrets>=4.9.0 # Key Vault for secrets management
+
+
+fsspec>=2024.10.0          
+adlfs>=2024.7.0              
+
+blosc2>=2.7.0                
+lz4>=4.3.0                   
+zstandard>=0.23.0            
+numcodecs>=0.13.0,<0.16.0   
+tqdm>=4.66.0                 
+click>=8.1.0                 
+python-dotenv>=1.0.0         
+cftime>=1.6.0                
