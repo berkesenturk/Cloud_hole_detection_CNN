@@ -6,7 +6,8 @@ netCDF4
 zarr         
 h5netcdf              
 ipykernel
-
+matplotlib
+seaborn
 dask[complete]
 distributed         
 dask-expr              
