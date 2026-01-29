@@ -1,10 +1,11 @@
-import torch 
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import TimeSeriesSplit
 from src.train import train_model, validate_model
 from src.utils import early_stopping, plot_training_curves
+
 
 def validation_of_pretrained_model(
     batch_size,
@@ -21,7 +22,7 @@ def validation_of_pretrained_model(
     Description:
         Perform time-series cross-validation on the pretrained model using the given parameters.
 
-    Parameters:    
+    Parameters:
         batch_size: int
             The batch size for training.
         learning_rate: float
@@ -32,7 +33,7 @@ def validation_of_pretrained_model(
             The number of splits for time-series cross-validation.
         patience: int
             The number of epochs to wait before stopping if no improvement.
-    
+
     """
     tscv = TimeSeriesSplit(n_splits=num_splits)
     fold_metrics = []
@@ -46,7 +47,7 @@ def validation_of_pretrained_model(
 
         print("\tTRAIN indices:", train_idx)
         print("\tVALIDATION indices:", val_idx)
-        
+
         train_subset = Subset(dataset, train_idx)
         val_subset = Subset(dataset, val_idx)
 
@@ -60,33 +61,29 @@ def validation_of_pretrained_model(
 
         # plot_class_distribution(train_labels, dataset_name="Training Set")
         # plot_class_distribution(val_labels, dataset_name="Validation Set")
-        
+
         for epoch in range(num_epochs):
             train_loss, train_accuracy = train_model(model, train_loader, criterion, optimizer)
             val_loss, val_accuracy = validate_model(model, val_loader, criterion)
-            
+
             scheduler.step(val_loss)
 
             train_losses.append(train_loss)
             train_accuracies.append(train_accuracy)
             val_losses.append(val_loss)
             val_accuracies.append(val_accuracy)
-            
 
-            
             print(f"Epoch {epoch + 1}, Validation Loss: {val_loss:.4f}, Accuracy: {val_accuracy:.4f}%")
 
             best_val_loss, counter = early_stopping(val_loss, best_val_loss, counter, patience)
 
             if counter >= patience:
                 print(f"Early stopping triggered at epoch {epoch + 1}")
-                
+
                 plot_training_curves(train_losses, val_losses, train_accuracies, val_accuracies, fold)
                 break
 
-            
-
-            # Save the best model 
+            # Save the best model
             if val_loss == best_val_loss:
                 torch.save({
                     'fold': fold + 1,

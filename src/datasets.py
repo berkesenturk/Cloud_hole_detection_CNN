@@ -3,7 +3,6 @@ from torch.utils.data import Dataset
 import torch.nn.functional as F
 from torchvision import transforms
 import pandas as pd
-import numpy as np
 import xarray as xr
 
 import os
@@ -11,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class CloudHoleDataset(Dataset):
-    def __init__(self, labels, nc_dir="./sat_data", train=True, years=None, mean = None, std = None, min = None, max = None, standard_normalize=False):
+    def __init__(self, labels, nc_dir="./sat_data", train=True, years=None, mean=None, std=None, min=None, max=None, standard_normalize=False):
         """
         Description:
 
@@ -29,7 +28,7 @@ class CloudHoleDataset(Dataset):
             List of years to include in the dataset.
         mean: float
             Mean value of the dataset for standard normalization.
-        std: float 
+        std: float
             Standard deviation value of the dataset for standard normalization.
         min: float
             Minimum value of the dataset min-max normalization.
@@ -37,20 +36,20 @@ class CloudHoleDataset(Dataset):
             Maximum value of the dataset for normalization.
         standard_normalize: bool
             Whether to use standard normalization or min-max normalization.
-        
+
         """
         self.labels = labels
         self.train = train
         self.nc_dir = nc_dir
         self.standard_normalize = standard_normalize
-        
+
         self.data = pd.read_csv(labels, index_col=0, parse_dates=True)
 
         self.mean = mean
         self.std = std
         self.min = min
         self.max = max
-        
+
         self.data = self.data.dropna(subset=["label"])
         self.data = self.data[~self.data["label"].str.contains("problem")]
 
@@ -59,7 +58,7 @@ class CloudHoleDataset(Dataset):
 
         self.dates = self.data[pd.DatetimeIndex(self.data.index).year.isin(years)]
         self.dates = self.dates.sort_index()
-        
+
         # berke TODO: paralellize this process as well
         # loading nc datasets
         self.ds_list = [
@@ -67,7 +66,7 @@ class CloudHoleDataset(Dataset):
             for start_date in self.dates.index
             if (image_data := self._load_netcdf_data(start_date)) is not None
         ]
-        
+
         # resizing ds to 224x224. we also achieve a uniform shape for the images.
         self.ds_list_resized = [
             (start_date, image_data)
@@ -78,14 +77,14 @@ class CloudHoleDataset(Dataset):
             self.mean, self.std = self._calculate_dataset_mean_std()
         if (self.min and self.max) is None:
             self.max, self.min = self._calculate_dataset_min_max()
-        
+
         # normalizing ds
         self.ds_list_resized_normalized = [
             (start_date, image_data)
             for (start_date, dataarray) in self.ds_list_resized
             if (image_data := self._normalize_dataarray(dataarray)) is not None
         ]
-           
+
         if self.train:
             augmented_data = []
 
@@ -111,11 +110,11 @@ class CloudHoleDataset(Dataset):
         """
         Description:
         Resize the given DataArray to 224x224 using bicubic interpolation.
-        
+
         Parameters:
         dataarray: xr.DataArray
             The input DataArray to resize.
-        
+
         Returns: torch.Tensor: The resized tensor.
         """
         try:
@@ -130,23 +129,23 @@ class CloudHoleDataset(Dataset):
                 mode='bicubic',
                 align_corners=False,
             )
-            
+
             resized_tensor = resized_tensor.squeeze(0)  # (C, 224, 224)
-            
+
             return resized_tensor
-         
+
         except Exception as e:
             print(f"Error in resizing DataArray: {e}")
             return None
-            
+
     def _calculate_dataset_min_max(self):
         """
         Description:
         Calculate the min and max of the entire dataset.
-        
+
         """
         return min(da[1].min().item() for da in self.ds_list_resized), max(da[1].max().item() for da in self.ds_list_resized)
-    
+
     def _normalize_dataarray(self, resized_tensor: torch.tensor) -> torch.tensor:
         """
         Description:
@@ -159,7 +158,7 @@ class CloudHoleDataset(Dataset):
             torch.Tensor: Normalized tensor.
         """
         try:
-            
+
             if isinstance(self.mean, (list, tuple)):
                 self.mean = torch.tensor(self.mean, dtype=torch.float32)
             if isinstance(self.std, (list, tuple)):
@@ -167,7 +166,7 @@ class CloudHoleDataset(Dataset):
 
             if self.standard_normalize:
                 normalized_data = (resized_tensor - self.mean) / self.std
-            else: 
+            else:
                 normalized_data = (resized_tensor - self.min) / (self.max - self.min)
             return normalized_data
 
@@ -185,7 +184,7 @@ class CloudHoleDataset(Dataset):
                 The date for which to load the netCDF file.
         """
         try:
-            timestamps = self.dates.loc[date:].index[:3] # Get the first 3 timestamps for the start date
+            timestamps = self.dates.loc[date:].index[:3]  # Get the first 3 timestamps for the start date
 
             directory = self.nc_dir
 
@@ -234,8 +233,8 @@ class CloudHoleDataset(Dataset):
             elif image_tensor.ndim == 2:  # Convert grayscale (H, W) to (1, H, W)
                 image_tensor = image_tensor.unsqueeze(0)
             else:
-                   raise ValueError(f"Unexpected tensor shape: {image_tensor.shape}")
-            
+                raise ValueError(f"Unexpected tensor shape: {image_tensor.shape}")
+
         elif isinstance(image, torch.Tensor):
             image_tensor = image
         else:
@@ -260,12 +259,12 @@ class CloudHoleDataset(Dataset):
         # ]
         augmentation_pipelines = [
             transforms.Compose([
-                transforms.RandomHorizontalFlip(p = 1),
+                transforms.RandomHorizontalFlip(p=1),
                 # transforms.RandomRotation(10),
                 # transforms.Normalize(mean=self.mean, std=self.std),
             ]),
             transforms.Compose([
-                transforms.RandomVerticalFlip(p = 1),
+                transforms.RandomVerticalFlip(p=1),
                 # transforms.GaussianBlur(3),
                 # transforms.Normalize(mean=self.mean, std=self.std),
             ]),
@@ -294,7 +293,7 @@ class CloudHoleDataset(Dataset):
 
             all_pixels.append(resized_image_data.view(3, -1))
 
-        all_pixels = torch.cat(all_pixels, dim=1)  
+        all_pixels = torch.cat(all_pixels, dim=1)
 
         mean = all_pixels.mean()
         std = all_pixels.std()
@@ -303,14 +302,14 @@ class CloudHoleDataset(Dataset):
         # print(f"Calculated std: {std}")
 
         return mean, std
-    
+
     def __len__(self):
         return len(self.ds_list_resized_normalized)
-    
+
     def __getitem__(self, idx):
-        """       
+        """
         Description:
-        
+
             Retrieves the data sample corresponding to the given index.
             - Combines image tensors into a batch.
             - Determines and returns the label tensor.
@@ -324,7 +323,7 @@ class CloudHoleDataset(Dataset):
         image_tensors = []
 
         for image_data in image_data_list:
-            
+
             if torch.isnan(image_data).any():
                 print(f"NaN values might be found for the dates: {self.dates.loc[start_date:].index[:3]} in the raw image data")
             image_tensors.append(image_data)
@@ -335,4 +334,3 @@ class CloudHoleDataset(Dataset):
         label_tensor = torch.tensor(label, dtype=torch.long)
 
         return images_tensor, label_tensor
-    
