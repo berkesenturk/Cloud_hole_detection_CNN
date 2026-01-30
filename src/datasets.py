@@ -58,7 +58,9 @@ class CloudHoleDataset(Dataset):
         self.data = self.data[~self.data["label"].str.contains("problem")]
 
         # 2007 is also added by commenting out the line below.
-        # self.data = self.data[~(pd.DatetimeIndex(self.data.index).year == 2007)]
+        # self.data = self.data[
+        # ~(pd.DatetimeIndex(self.data.index).year == 2007)
+        # ]
 
         self.dates = self.data[
             pd.DatetimeIndex(self.data.index).year.isin(years)
@@ -167,7 +169,8 @@ class CloudHoleDataset(Dataset):
     ) -> torch.tensor:
         """
         Description:
-        Normalize a dataarray by using either standard or min max normalization.
+        Normalize a dataarray by using either
+        standard or min max normalization.
 
         Parameters:
             torch.Tensor: The input resized (224x224) data to normalize.
