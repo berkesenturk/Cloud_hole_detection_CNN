@@ -2,8 +2,7 @@ name: PR Workflow
 
 on:
   pull_request:
-    # Trigger only when a PR is created
-    types: [opened, reopened]
+    types: [opened]
     branches: [ main, develop ]
 
 jobs:

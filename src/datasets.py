@@ -10,7 +10,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class CloudHoleDataset(Dataset):
-    def __init__(self, labels, nc_dir="./sat_data", train=True, years=None, mean=None, std=None, min=None, max=None, standard_normalize=False):
+    def __init__(
+        self, labels, nc_dir="./sat_data", train=True, years=None,
+        mean=None, std=None, min=None, max=None,
+        standard_normalize=False
+    ):
         """
         Description:
 
@@ -56,7 +60,9 @@ class CloudHoleDataset(Dataset):
         # 2007 is also added by commenting out the line below.
         # self.data = self.data[~(pd.DatetimeIndex(self.data.index).year == 2007)]
 
-        self.dates = self.data[pd.DatetimeIndex(self.data.index).year.isin(years)]
+        self.dates = self.data[
+            pd.DatetimeIndex(self.data.index).year.isin(years)
+        ]
         self.dates = self.dates.sort_index()
 
         # berke TODO: paralellize this process as well
@@ -67,7 +73,8 @@ class CloudHoleDataset(Dataset):
             if (image_data := self._load_netcdf_data(start_date)) is not None
         ]
 
-        # resizing ds to 224x224. we also achieve a uniform shape for the images.
+        # resizing ds to 224x224. we also achieve a uniform shape
+        # for the images.
         self.ds_list_resized = [
             (start_date, image_data)
             for (start_date, dataarray) in self.ds_list
@@ -88,18 +95,25 @@ class CloudHoleDataset(Dataset):
         if self.train:
             augmented_data = []
 
-            # here we apply augmentations to the cloud hole images only
-            # we implement parallel processing to speed up the process
+            # here we apply augmentations to the cloud hole
+            # images only
+            # we implement parallel processing to speed up
+            # the process
             def process_augmentation(args):
                 start_date, image_data = args
                 label_row = self.data.loc[start_date]
                 if label_row["label"] == "cloud_hole":
-                    augmented_images = self._apply_augmentations(image_data)
+                    augmented_images = self._apply_augmentations(
+                        image_data
+                    )
                     return [(start_date, img) for img in augmented_images]
                 return []
 
             with ThreadPoolExecutor() as executor:
-                results = executor.map(process_augmentation, self.ds_list_resized_normalized)
+                results = executor.map(
+                    process_augmentation,
+                    self.ds_list_resized_normalized
+                )
 
             for result in results:
                 augmented_data.extend(result)
@@ -144,9 +158,13 @@ class CloudHoleDataset(Dataset):
         Calculate the min and max of the entire dataset.
 
         """
-        return min(da[1].min().item() for da in self.ds_list_resized), max(da[1].max().item() for da in self.ds_list_resized)
+        min_val = min(da[1].min().item() for da in self.ds_list_resized)
+        max_val = max(da[1].max().item() for da in self.ds_list_resized)
+        return min_val, max_val
 
-    def _normalize_dataarray(self, resized_tensor: torch.tensor) -> torch.tensor:
+    def _normalize_dataarray(
+        self, resized_tensor: torch.tensor
+    ) -> torch.tensor:
         """
         Description:
         Normalize a dataarray by using either standard or min max normalization.
@@ -160,14 +178,22 @@ class CloudHoleDataset(Dataset):
         try:
 
             if isinstance(self.mean, (list, tuple)):
-                self.mean = torch.tensor(self.mean, dtype=torch.float32)
+                self.mean = torch.tensor(
+                    self.mean, dtype=torch.float32
+                )
             if isinstance(self.std, (list, tuple)):
-                self.std = torch.tensor(self.std, dtype=torch.float32)
+                self.std = torch.tensor(
+                    self.std, dtype=torch.float32
+                )
 
             if self.standard_normalize:
-                normalized_data = (resized_tensor - self.mean) / self.std
+                normalized_data = (
+                    (resized_tensor - self.mean) / self.std
+                )
             else:
-                normalized_data = (resized_tensor - self.min) / (self.max - self.min)
+                normalized_data = (
+                    (resized_tensor - self.min) / (self.max - self.min)
+                )
             return normalized_data
 
         except Exception as e:
@@ -177,23 +203,35 @@ class CloudHoleDataset(Dataset):
     def _load_netcdf_data(self, date) -> xr.DataArray:
         """
         Description:
-            Load the netCDF file corresponding to the given date and consecutive two timesteps.
+            Load the netCDF file corresponding to the given date and
+            consecutive two timesteps.
             If the file is not found, return None.
         Parameters:
             date: str
                 The date for which to load the netCDF file.
         """
         try:
-            timestamps = self.dates.loc[date:].index[:3]  # Get the first 3 timestamps for the start date
+            # Get the first 3 timestamps for the start date
+            timestamps = self.dates.loc[date:].index[:3]
 
             directory = self.nc_dir
 
-            filename_pattern = f"hrv_lr{pd.Timestamp(date).strftime('%Y%m')}.nc"
-            matching_files = [f for f in os.listdir(directory) if f == filename_pattern]
+            filename_pattern = (
+                f"hrv_lr{pd.Timestamp(date).strftime('%Y%m')}.nc"
+            )
+            matching_files = [
+                f for f in os.listdir(directory)
+                if f == filename_pattern
+            ]
 
             if not matching_files:
-                filename_pattern = f"hrv_{pd.Timestamp(date).strftime('%Y%m')}.nc"
-                matching_files = [f for f in os.listdir(directory) if f == filename_pattern]
+                filename_pattern = (
+                    f"hrv_{pd.Timestamp(date).strftime('%Y%m')}.nc"
+                )
+                matching_files = [
+                    f for f in os.listdir(directory)
+                    if f == filename_pattern
+                ]
 
                 if not matching_files:
                     raise FileNotFoundError()
@@ -201,7 +239,9 @@ class CloudHoleDataset(Dataset):
             filepath = os.path.join(directory, matching_files[0])
             dataset = xr.open_dataset(filepath)
 
-            dataarray = dataset.hrv.sel(time=slice(timestamps[0], timestamps[-1]))
+            dataarray = dataset.hrv.sel(
+                time=slice(timestamps[0], timestamps[-1])
+            )
             if dataarray.shape[0] != 3:
                 return None
 
@@ -221,19 +261,26 @@ class CloudHoleDataset(Dataset):
             image: torch.Tensor
                 The image tensor to augment.
         Returns:
-            list[torch.Tensor]: A list of augmented image tensors.
+            list[torch.Tensor]: A list of augmented image
+                tensors.
         """
         augmented_images = []
 
         # Convert DataArray to Torch Tensor if not already
         if isinstance(image, xr.DataArray):
-            image_tensor = torch.tensor(image.values, dtype=torch.float32)
-            if image_tensor.ndim == 3:  # Ensure shape is (C, H, W) for augmentations
+            image_tensor = torch.tensor(
+                image.values, dtype=torch.float32
+            )
+            # Ensure shape is (C, H, W) for augmentations
+            if image_tensor.ndim == 3:
                 pass
-            elif image_tensor.ndim == 2:  # Convert grayscale (H, W) to (1, H, W)
+            # Convert grayscale (H, W) to (1, H, W)
+            elif image_tensor.ndim == 2:
                 image_tensor = image_tensor.unsqueeze(0)
             else:
-                raise ValueError(f"Unexpected tensor shape: {image_tensor.shape}")
+                raise ValueError(
+                    f"Unexpected tensor shape: {image_tensor.shape}"
+                )
 
         elif isinstance(image, torch.Tensor):
             image_tensor = image
@@ -289,7 +336,9 @@ class CloudHoleDataset(Dataset):
 
         for date, resized_image_data in self.ds_list_resized:
             if isinstance(resized_image_data, xr.DataArray):
-                resized_image_data = torch.tensor(resized_image_data.values, dtype=torch.float32)
+                resized_image_data = torch.tensor(
+                    resized_image_data.values, dtype=torch.float32
+                )
 
             all_pixels.append(resized_image_data.view(3, -1))
 
@@ -310,22 +359,30 @@ class CloudHoleDataset(Dataset):
         """
         Description:
 
-            Retrieves the data sample corresponding to the given index.
+            Retrieves the data sample corresponding to the given
+            index.
             - Combines image tensors into a batch.
             - Determines and returns the label tensor.
         Parameters:
             idx: int
                 The index of the dataset to retrieve.
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: A tuple containing the image tensor and label tensor.
+            tuple[torch.Tensor, torch.Tensor]: A tuple containing
+                the image tensor and label tensor.
         """
-        start_date, image_data_list = self.ds_list_resized_normalized[idx]
+        start_date, image_data_list = (
+            self.ds_list_resized_normalized[idx]
+        )
         image_tensors = []
 
         for image_data in image_data_list:
 
             if torch.isnan(image_data).any():
-                print(f"NaN values might be found for the dates: {self.dates.loc[start_date:].index[:3]} in the raw image data")
+                print(
+                    f"NaN values might be found for the dates: "
+                    f"{self.dates.loc[start_date:].index[:3]} "
+                    f"in the raw image data"
+                )
             image_tensors.append(image_data)
 
         images_tensor = torch.stack(image_tensors)

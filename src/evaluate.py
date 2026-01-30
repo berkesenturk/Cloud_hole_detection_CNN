@@ -20,7 +20,8 @@ def validation_of_pretrained_model(
 ):
     """
     Description:
-        Perform time-series cross-validation on the pretrained model using the given parameters.
+        Perform time-series cross-validation on the pretrained model
+        using the given parameters.
 
     Parameters:
         batch_size: int
@@ -32,7 +33,8 @@ def validation_of_pretrained_model(
         num_splits: int
             The number of splits for time-series cross-validation.
         patience: int
-            The number of epochs to wait before stopping if no improvement.
+            The number of epochs to wait before stopping if no
+            improvement.
 
     """
     tscv = TimeSeriesSplit(n_splits=num_splits)
@@ -41,8 +43,9 @@ def validation_of_pretrained_model(
     val_losses = []
     train_accuracies = []
     val_accuracies = []
-    count_epochs = 0
-    for fold, (train_idx, val_idx) in enumerate(tscv.split(range(len(dataset)))):
+    for fold, (train_idx, val_idx) in enumerate(
+        tscv.split(range(len(dataset)))
+    ):
         print(f"Fold {fold + 1}/{num_splits}")
 
         print("\tTRAIN indices:", train_idx)
@@ -51,20 +54,32 @@ def validation_of_pretrained_model(
         train_subset = Subset(dataset, train_idx)
         val_subset = Subset(dataset, val_idx)
 
-        train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False)
-        # train_labels = [train_subset.dataset.targets[i] for i in train_subset.indices]
-        # val_labels = [val_subset.dataset.targets[i] for i in val_subset.indices]
+        train_loader = DataLoader(
+            train_subset, batch_size=batch_size, shuffle=True
+        )
+        val_loader = DataLoader(
+            val_subset, batch_size=batch_size, shuffle=False
+        )
+        # train_labels = [train_subset.dataset.targets[i]
+        #                 for i in train_subset.indices]
+        # val_labels = [val_subset.dataset.targets[i]
+        #               for i in val_subset.indices]
 
         best_val_loss = float('inf')
         counter = 0
 
-        # plot_class_distribution(train_labels, dataset_name="Training Set")
-        # plot_class_distribution(val_labels, dataset_name="Validation Set")
+        # plot_class_distribution(train_labels,
+        #                         dataset_name="Training Set")
+        # plot_class_distribution(val_labels,
+        #                         dataset_name="Validation Set")
 
         for epoch in range(num_epochs):
-            train_loss, train_accuracy = train_model(model, train_loader, criterion, optimizer)
-            val_loss, val_accuracy = validate_model(model, val_loader, criterion)
+            train_loss, train_accuracy = train_model(
+                model, train_loader, criterion, optimizer
+            )
+            val_loss, val_accuracy = validate_model(
+                model, val_loader, criterion
+            )
 
             scheduler.step(val_loss)
 
@@ -73,14 +88,22 @@ def validation_of_pretrained_model(
             val_losses.append(val_loss)
             val_accuracies.append(val_accuracy)
 
-            print(f"Epoch {epoch + 1}, Validation Loss: {val_loss:.4f}, Accuracy: {val_accuracy:.4f}%")
+            print(
+                f"Epoch {epoch + 1}, Validation Loss: {val_loss:.4f}, "
+                f"Accuracy: {val_accuracy:.4f}%"
+            )
 
-            best_val_loss, counter = early_stopping(val_loss, best_val_loss, counter, patience)
+            best_val_loss, counter = early_stopping(
+                val_loss, best_val_loss, counter, patience
+            )
 
             if counter >= patience:
                 print(f"Early stopping triggered at epoch {epoch + 1}")
 
-                plot_training_curves(train_losses, val_losses, train_accuracies, val_accuracies, fold)
+                plot_training_curves(
+                    train_losses, val_losses,
+                    train_accuracies, val_accuracies, fold
+                )
                 break
 
             # Save the best model
@@ -94,7 +117,10 @@ def validation_of_pretrained_model(
                     'val_accuracy': val_accuracy
                 }, f'best_model_fold_{fold + 1}.pth')
 
-        plot_training_curves(train_losses, val_losses, train_accuracies, val_accuracies, fold)
+        plot_training_curves(
+            train_losses, val_losses,
+            train_accuracies, val_accuracies, fold
+        )
 
         fold_metrics.append((val_loss, val_accuracy))
 
@@ -124,4 +150,5 @@ def validation_of_pretrained_model(
     print(f"Average Validation Loss: {avg_val_loss:.4f}")
     print(f"Average Validation Accuracy: {avg_val_accuracy:.2f}%")
 
-    return train_losses, val_losses, train_accuracies, val_accuracies, fold_metrics, model
+    return (train_losses, val_losses, train_accuracies,
+            val_accuracies, fold_metrics, model)

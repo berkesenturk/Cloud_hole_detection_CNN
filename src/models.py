@@ -6,7 +6,9 @@ class CNN_Model(nn.Module):
 
     def __init__(self, number_of_classes):
         super(CNN_Model, self).__init__()
-        self.conv_layer1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=5)
+        self.conv_layer1 = nn.Conv2d(
+            in_channels=3, out_channels=32, kernel_size=5
+        )
         self.max_pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.dropout1 = nn.Dropout(p=0.1)
         self.relu1 = nn.ReLU()
