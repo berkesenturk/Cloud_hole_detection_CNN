@@ -11,7 +11,7 @@ seaborn
 dask[complete]
 distributed         
 dask-expr              
-
+pytest
 
 # azure-storage-blob>=12.25.0   # Azure Blob Storage (Jan 2026 release)
 # azure-identity>=1.20.0        # Azure authentication
