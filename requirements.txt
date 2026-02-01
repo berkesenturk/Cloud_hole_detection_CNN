@@ -1,8 +1,11 @@
+--index-url https://download.pytorch.org/whl/cu126
 numpy
 pandas         
 packaging              
 xarray          
-netCDF4       
+netCDF4
+torch
+torchvision       
 zarr         
 h5netcdf              
 ipykernel

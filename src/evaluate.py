@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import TimeSeriesSplit
-from src.train import train_model, validate_model
+from src.training.train import train_model, validate_model
 from src.utils import early_stopping, plot_training_curves
 
 

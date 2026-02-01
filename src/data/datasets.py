@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 class CloudHoleDataset(Dataset):
     def __init__(
-        self, labels, nc_dir="./sat_data", train=True, years=None,
+        self, labels, data_dir="./sat_data", train=True, years=None,
         mean=None, std=None, min=None, max=None,
         standard_normalize=False
     ):
@@ -24,8 +24,8 @@ class CloudHoleDataset(Dataset):
 
         labels: str
             Path to the CSV file containing the labels and dates.
-        nc_dir: str
-            Path to the directory containing the netCDF files.
+        data_dir: str
+            Path to the directory containing netCDF files or Zarr store.
         train: bool
             Whether to use the training set or validation set.
         years: list
@@ -44,8 +44,15 @@ class CloudHoleDataset(Dataset):
         """
         self.labels = labels
         self.train = train
-        self.nc_dir = nc_dir
+        self.data_dir = data_dir
         self.standard_normalize = standard_normalize
+        self.is_zarr = data_dir.endswith('.zarr')
+        
+        # Load Zarr dataset once if applicable
+        if self.is_zarr:
+            self.zarr_dataset = xr.open_zarr(self.data_dir)
+        else:
+            self.zarr_dataset = None
 
         self.data = pd.read_csv(labels, index_col=0, parse_dates=True)
 
@@ -68,11 +75,11 @@ class CloudHoleDataset(Dataset):
         self.dates = self.dates.sort_index()
 
         # berke TODO: paralellize this process as well
-        # loading nc datasets
+        # loading nc/zarr datasets
         self.ds_list = [
             (start_date, image_data)
             for start_date in self.dates.index
-            if (image_data := self._load_netcdf_data(start_date)) is not None
+            if (image_data := self._load_data(start_date)) is not None
         ]
 
         # resizing ds to 224x224. we also achieve a uniform shape
@@ -203,33 +210,31 @@ class CloudHoleDataset(Dataset):
             print(f"Error normalizing dataarray: {e}")
             raise
 
-    def _load_netcdf_data(self, date) -> xr.DataArray:
+    def _load_data(self, date) -> xr.DataArray:
         """
         Description:
-            Load the netCDF file corresponding to the given date and
-            consecutive two timesteps.
-            If the file is not found, return None.
+            Load data from either Zarr store or netCDF file corresponding 
+            to the given date and consecutive two timesteps.
+            If the file/data is not found, return None.
         Parameters:
             date: str
-                The date for which to load the netCDF file.
+                The date for which to load the data.
         """
         try:
             # Get the first 3 timestamps for the start date
             timestamps = self.dates.loc[date:].index[:3]
 
-            directory = self.nc_dir
+            if self.is_zarr:
+                # Load from Zarr store
+                dataarray = self.zarr_dataset.hrv.sel(
+                    time=slice(timestamps[0], timestamps[-1])
+                )
+            else:
+                # Load from netCDF files
+                directory = self.data_dir
 
-            filename_pattern = (
-                f"hrv_lr{pd.Timestamp(date).strftime('%Y%m')}.nc"
-            )
-            matching_files = [
-                f for f in os.listdir(directory)
-                if f == filename_pattern
-            ]
-
-            if not matching_files:
                 filename_pattern = (
-                    f"hrv_{pd.Timestamp(date).strftime('%Y%m')}.nc"
+                    f"hrv_lr{pd.Timestamp(date).strftime('%Y%m')}.nc"
                 )
                 matching_files = [
                     f for f in os.listdir(directory)
@@ -237,14 +242,25 @@ class CloudHoleDataset(Dataset):
                 ]
 
                 if not matching_files:
-                    raise FileNotFoundError()
+                    filename_pattern = (
+                        f"hrv_{pd.Timestamp(date).strftime('%Y%m')}.nc"
+                    )
+                    matching_files = [
+                        f for f in os.listdir(directory)
+                        if f == filename_pattern
+                    ]
 
-            filepath = os.path.join(directory, matching_files[0])
-            dataset = xr.open_dataset(filepath)
+                    if not matching_files:
+                        raise FileNotFoundError(
+                            f"No matching files for {date}"
+                        )
 
-            dataarray = dataset.hrv.sel(
-                time=slice(timestamps[0], timestamps[-1])
-            )
+                filepath = os.path.join(directory, matching_files[0])
+                dataset = xr.open_dataset(filepath)
+                dataarray = dataset.hrv.sel(
+                    time=slice(timestamps[0], timestamps[-1])
+                )
+
             if dataarray.shape[0] != 3:
                 return None
 
@@ -254,7 +270,7 @@ class CloudHoleDataset(Dataset):
             return dataarray
 
         except Exception as e:
-            print(f"File: {matching_files} Date: {date} Unexpected error: {e}")
+            print(f"Date: {date} Error loading data: {e}")
             return None
 
     def _apply_augmentations(self, image):
@@ -290,38 +306,15 @@ class CloudHoleDataset(Dataset):
         else:
             raise TypeError(f"Unsupported image type: {type(image)}")
 
-        # augmentation_pipelines = [
-        #     transforms.Compose([
-        #         transforms.RandomHorizontalFlip(),
-        #         transforms.RandomRotation(10),
-        #         # transforms.Normalize(mean=self.mean, std=self.std),
-        #     ]),
-        #     transforms.Compose([
-        #         transforms.RandomVerticalFlip(),
-        #         transforms.GaussianBlur(3),
-        #         # transforms.Normalize(mean=self.mean, std=self.std),
-        #     ]),
-        #     transforms.Compose([
-        #         transforms.RandomAffine(degrees=10),
-        #         transforms.RandomRotation(5),
-        #         # transforms.Normalize(mean=self.mean, std=self.std),
-        #     ]),
-        # ]
         augmentation_pipelines = [
             transforms.Compose([
                 transforms.RandomHorizontalFlip(p=1),
-                # transforms.RandomRotation(10),
-                # transforms.Normalize(mean=self.mean, std=self.std),
             ]),
             transforms.Compose([
                 transforms.RandomVerticalFlip(p=1),
-                # transforms.GaussianBlur(3),
-                # transforms.Normalize(mean=self.mean, std=self.std),
             ]),
             transforms.Compose([
-                # transforms.RandomAffine(degrees=10),
                 transforms.RandomRotation(5),
-                # transforms.Normalize(mean=self.mean, std=self.std),
             ]),
         ]
         for pipeline in augmentation_pipelines:
@@ -349,9 +342,6 @@ class CloudHoleDataset(Dataset):
 
         mean = all_pixels.mean()
         std = all_pixels.std()
-
-        # print(f"Calculated mean: {mean}")
-        # print(f"Calculated std: {std}")
 
         return mean, std
 
