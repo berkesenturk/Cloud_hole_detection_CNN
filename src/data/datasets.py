@@ -13,7 +13,8 @@ class CloudHoleDataset(Dataset):
     def __init__(
         self, labels, data_dir="./sat_data", train=True, years=None,
         mean=None, std=None, min=None, max=None,
-        standard_normalize=False
+        standard_normalize=False,
+        augment=False
     ):
         """
         Description:
@@ -47,6 +48,7 @@ class CloudHoleDataset(Dataset):
         self.data_dir = data_dir
         self.standard_normalize = standard_normalize
         self.is_zarr = data_dir.endswith('.zarr')
+        self.augment = augment
         
         # Load Zarr dataset once if applicable
         if self.is_zarr:
@@ -64,18 +66,11 @@ class CloudHoleDataset(Dataset):
         self.data = self.data.dropna(subset=["label"])
         self.data = self.data[~self.data["label"].str.contains("problem")]
 
-        # 2007 is also added by commenting out the line below.
-        # self.data = self.data[
-        # ~(pd.DatetimeIndex(self.data.index).year == 2007)
-        # ]
-
         self.dates = self.data[
             pd.DatetimeIndex(self.data.index).year.isin(years)
         ]
         self.dates = self.dates.sort_index()
 
-        # berke TODO: paralellize this process as well
-        # loading nc/zarr datasets
         self.ds_list = [
             (start_date, image_data)
             for start_date in self.dates.index
@@ -89,6 +84,7 @@ class CloudHoleDataset(Dataset):
             for (start_date, dataarray) in self.ds_list
             if (image_data := self._resize_datarray(dataarray)) is not None
         ]
+
         if (self.mean and self.std) is None:
             self.mean, self.std = self._calculate_dataset_mean_std()
         if (self.min and self.max) is None:
@@ -101,7 +97,7 @@ class CloudHoleDataset(Dataset):
             if (image_data := self._normalize_dataarray(dataarray)) is not None
         ]
 
-        if self.train:
+        if self.train and self.augment:
             augmented_data = []
 
             # here we apply augmentations to the cloud hole
