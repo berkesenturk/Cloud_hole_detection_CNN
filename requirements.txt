@@ -20,7 +20,7 @@ cffi==2.0.0
 cftime==1.6.5
 charset-normalizer==3.4.4
 click==8.3.1
--e git+ssh://git@github.com/berkesenturk/cnn_cloud_hole_detection.git@ec5755faf015053fcf2f642bffd05b0df36c0556#egg=cloud_hole_detection
+-e git+ssh://git@github.com:berkesenturk/Cloud_hole_detection_CNN.git@ec5755faf015053fcf2f642bffd05b0df36c0556#egg=cloud_hole_detection
 cloudpickle==3.1.2
 comm==0.2.3
 contourpy==1.3.2
