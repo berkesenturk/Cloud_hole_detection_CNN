@@ -13,6 +13,8 @@ env:
 jobs:
   silver-job:
     runs-on: ubuntu-latest
+    environment:
+      name: "development"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
