@@ -26,6 +26,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install azure-storage-file-datalake
+          pip install -e .
+
           # Add requirements for your generation script here (e.g., zarr, numpy)
           # pip install zarr numpy 
 
