@@ -26,10 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install azure-storage-file-datalake
-          pip install -e .
-          # Add requirements for your generation script here (e.g., zarr, numpy)
-          # pip install zarr numpy 
+          python -m pip install -r requirements.txt
 
       - name: Generate Silver Data
         # Replace this with the command to run your script
