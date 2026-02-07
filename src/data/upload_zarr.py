@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     if not conn_str:
         print("""
-            Error: AZURE_STORAGE_CONNECTION_STRING environment variable is missing.
+            Error: AZURE_STORAGE_CONNECTION_STRING is missing.
         """)
         sys.exit(1)
 
