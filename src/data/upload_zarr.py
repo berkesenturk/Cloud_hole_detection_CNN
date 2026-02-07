@@ -22,7 +22,7 @@ def upload_to_datalake(source_dir, container_name, connection_string):
         for root, dirs, files in os.walk(source_dir):
             for file in files:
                 local_path = os.path.join(root, file)
-                # Calculate relative path for 
+                # Calculate relative path for
                 # ADLS (removes local source_dir prefix)
                 relative_path = os.path.relpath(
                     local_path, start=os.path.dirname(source_dir)
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     if not conn_str:
         print("""
-            Error: AZURE_STORAGE_CONNECTION_STRING environment variable is missing.
+            Error: AZURE_STORAGE_CONNECTION_STRING is missing.
         """)
         sys.exit(1)
 

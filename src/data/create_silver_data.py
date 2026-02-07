@@ -2,10 +2,8 @@ import argparse
 from pathlib import Path
 
 from src.utils import NetCDFToZarrConverter
-from src.data.datasets import CloudHoleDataset
 
-import os
-print(f"Current working directory: {os.getcwd()}")
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Convert NetCDF files to Zarr and compute stats"

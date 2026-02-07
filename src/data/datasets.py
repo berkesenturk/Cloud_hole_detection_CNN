@@ -49,7 +49,7 @@ class CloudHoleDataset(Dataset):
         self.standard_normalize = standard_normalize
         self.is_zarr = data_dir.endswith('.zarr')
         self.augment = augment
-        
+
         # Load Zarr dataset once if applicable
         if self.is_zarr:
             self.zarr_dataset = xr.open_zarr(self.data_dir)
@@ -209,7 +209,7 @@ class CloudHoleDataset(Dataset):
     def _load_data(self, date) -> xr.DataArray:
         """
         Description:
-            Load data from either Zarr store or netCDF file corresponding 
+            Load data from either Zarr store or netCDF file corresponding
             to the given date and consecutive two timesteps.
             If the file/data is not found, return None.
         Parameters:
