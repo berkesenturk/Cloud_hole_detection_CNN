@@ -1,0 +1,41 @@
+name: gold Data Pipeline
+
+on:
+  workflow_dispatch: # Allows manual trigger
+  push:
+    branches: [ "main" ]
+
+env:
+  source_folder: "data/processed/seviri" # Local folder containing gold data
+  target_container: "gold" # ADLS container name for gold data
+
+jobs:
+  gold-job:
+    runs-on: ubuntu-latest
+    environment:
+      name: "development"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install azure-storage-file-datalake
+          # Add requirements for your generation script here (e.g., zarr, numpy)
+          # pip install zarr numpy 
+
+      - name: Generate gold Data
+        # Replace this with the command to run your script
+        run: python your_generation_script.py --output ./gold_data
+
+      - name: Upload to gold Container
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+        run: |
+          # Usage: python upload_zarr.py <source_folder> <container_name>
+          python upload_zarr.py ${{ env.source_folder }} ${{ env.target_container }}

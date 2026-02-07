@@ -28,11 +28,23 @@ Next steps,
 - No. of scenes: ~900 per month (~20MB) --> 15 years * 4 months * 900 = 54000 scenes in total
 - No. of cloud hole labels: not many labels yet
 
-
-
 ## Label
 - 2 classes: cloud hole (CH), non-cloud hole (nCH, incl. clear sky, snow, hetreogenous clouds)
 - only few days for Paris (18 days * ~ 12 scenes per day = 216 labels)
+
+
+## Testing
+
+pytest tests/unit -v
+
+
+
+## Future Steps
+
+Project will be further developed to have a modern end-to-end MLOps pipeline.
+
+Test Driven Development will be applied while implementing the future steps.
+
 
 
 ## Authors and acknowledgment
