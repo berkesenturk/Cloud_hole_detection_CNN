@@ -1,45 +1,79 @@
-import os
-from datetime import datetime
+import argparse
 from pathlib import Path
 
-import xarray as xr
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from src.utils import (
-    NetCDFToZarrConverter
-)
+from src.utils import NetCDFToZarrConverter
 from src.data.datasets import CloudHoleDataset
 
-raw_data_path = "../../data/raw"
+import os
+print(f"Current working directory: {os.getcwd()}")
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Convert NetCDF files to Zarr and compute stats"
+    )
 
-# Scaling only performed for time dimension
-# 20MB per chunk is aimed
+    parser.add_argument(
+        "--input",
+        required=True,
+        help="Path to raw data folder"
+    )
 
-converter = NetCDFToZarrConverter()
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to processed data folder"
+    )
 
-chunk_analysis = converter.analyze_netcdf_files(f"{raw_data_path}/seviri/hrv_lr2*.nc")
+    return parser.parse_args()
 
-input_file_pattern = f"{raw_data_path}/seviri/hrv_lr2*.nc"
 
-files = sorted(Path().glob(input_file_pattern))
+def main():
 
-"""
-- Issue:Segmentation fault (core dumped)
-- Reason: parallel=True, chunks='auto' on xr.open_mfdataset
-- Solution: set parallel false and chunks to None
-"""
+    args = parse_args()
 
-first_year, last_year = files[0].as_posix()[-9:-5], files[-1].as_posix()[-9:-5]
+    raw_data_path = Path(args.input)
+    processed_data_path = Path(args.output)
 
-processed_data_path = "../../data/processed"
+    seviri_raw = raw_data_path
+    seviri_processed = processed_data_path
 
-dataset = CloudHoleDataset(
-    labels=f"{processed_data_path}/julia_labels.csv",
-    data_dir=f"{processed_data_path}/seviri/hrv_lr{first_year}_{last_year}.zarr",
-    years=range(int(first_year), int(last_year)+1)
-)
+    input_pattern = "hrv_lr2*.nc"
 
-mean, std = dataset.mean, dataset.std
+    print("\n Scanning NetCDF files...")
 
-print(f"Mean: {mean}, Std: {std}")
+    files = sorted(seviri_raw.glob(input_pattern))
+
+    if not files:
+        raise FileNotFoundError(
+            f"No NetCDF files found in {seviri_raw}"
+        )
+
+    converter = NetCDFToZarrConverter(
+        raw_data_path=seviri_raw,
+        processed_data_path=seviri_processed
+    )
+    chunk_analysis = converter.analyze_netcdf_files(
+        input_pattern
+    )
+
+    first_year = files[0].as_posix()[-9:-5]
+    last_year = files[-1].as_posix()[-9:-5]
+
+    print(f"\n Year range detected: {first_year} → {last_year}")
+
+    zarr_path = (
+        seviri_processed /
+        f"hrv_lr{first_year}_{last_year}.zarr"
+    )
+    converter.convert_multiple_files_to_single_zarr(
+        file_pattern=input_pattern,
+        output_path=zarr_path,
+        custom_chunks=chunk_analysis["recommended_chunks"]
+    )
+
+# -------------------------------------------------
+# Entry point
+# -------------------------------------------------
+
+
+if __name__ == "__main__":
+    main()

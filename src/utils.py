@@ -27,6 +27,8 @@ class NetCDFToZarrConverter:
         chunk_spatial: int = 256,
         compression_level: int = 3,
         use_dask: bool = True,
+        raw_data_path: Path = None,
+        processed_data_path: Path = None
     ):
         """
         Initialize converter with optimal chunking parameters
@@ -36,11 +38,17 @@ class NetCDFToZarrConverter:
             chunk_spatial: Spatial dimension chunk size (lat/lon)
             compression_level: Compression level (1-9, 3 recommended)
             use_dask: Use dask for parallel processing
+            raw_data_path: Path to raw data folder
+            processed_data_path: Path to processed data folder
         """
         self.chunk_time = chunk_time
         self.chunk_spatial = chunk_spatial
         self.compression_level = compression_level
         self.use_dask = use_dask
+        self.raw_data_path = Path(raw_data_path) if raw_data_path else None
+        self.processed_data_path = (
+            Path(processed_data_path) if processed_data_path else None
+        )
 
     def analyze_netcdf_files(self, file_pattern: str) -> Dict:
         """
@@ -55,7 +63,7 @@ class NetCDFToZarrConverter:
         """
         logger.info(f"Analyzing NetCDF files matching: {file_pattern}")
 
-        files = sorted(Path().glob(file_pattern))
+        files = sorted(self.raw_data_path.glob(file_pattern))
 
         if not files:
             raise ValueError(
@@ -64,8 +72,8 @@ class NetCDFToZarrConverter:
 
         logger.info(f"Found {len(files)} files")
 
-        # Open first file to get dimensions
-        with xr.open_mfdataset(file_pattern) as ds:
+        # Open files using resolved paths
+        with xr.open_mfdataset(files, combine="by_coords") as ds:
             dims = dict(ds.dims)
             variables = list(ds.data_vars)
             coords = list(ds.coords)
@@ -161,19 +169,27 @@ class NetCDFToZarrConverter:
     ):
         """
         Convert a single NetCDF file to Zarr
-
-        Args:
-            input_file: Path to input NetCDF file
-            output_path: Path for output Zarr store
-            custom_chunks: Optional custom chunking dictionary
         """
-        logger.info(f"Converting {input_file} to {output_path}")
+        input_path = (
+            self.raw_data_path / input_file
+            if self.raw_data_path and not Path(input_file).is_absolute()
+            else Path(input_file)
+        )
+
+        output_path = (
+            self.processed_data_path / output_path
+            if self.processed_data_path
+            and not Path(output_path).is_absolute()
+            else Path(output_path)
+        )
+
+        logger.info(f"Converting {input_path} to {output_path}")
 
         try:
             if self.use_dask:
-                ds = xr.open_dataset(input_file, chunks="auto")
+                ds = xr.open_dataset(input_path, chunks="auto")
             else:
-                ds = xr.open_dataset(input_file)
+                ds = xr.open_dataset(input_path)
 
             if custom_chunks:
                 chunks = custom_chunks
@@ -207,10 +223,10 @@ class NetCDFToZarrConverter:
                 )
 
             ds.close()
-            logger.info(f"Successfully converted {input_file}")
+            logger.info(f"Successfully converted {input_path}")
 
         except Exception as e:
-            logger.error(f"Error converting {input_file}: {str(e)}")
+            logger.error(f"Error converting {input_path}: {str(e)}")
             raise
 
     def convert_multiple_files_to_single_zarr(
@@ -227,7 +243,7 @@ class NetCDFToZarrConverter:
             f"Converting multiple files to single Zarr: {file_pattern}"
         )
 
-        files = sorted(Path().glob(file_pattern))
+        files = sorted(self.raw_data_path.glob(file_pattern))
 
         if not files:
             raise ValueError(f"No files found matching: {file_pattern}")
@@ -235,10 +251,7 @@ class NetCDFToZarrConverter:
         logger.info(f"Found {len(files)} files to convert")
 
         try:
-            if self.use_dask:
-                ds = xr.open_mfdataset(files, combine="by_coords")
-            else:
-                ds = xr.open_mfdataset(files, combine="by_coords")
+            ds = xr.open_mfdataset(files, combine="by_coords")
 
             if custom_chunks:
                 chunks = custom_chunks
@@ -252,6 +265,12 @@ class NetCDFToZarrConverter:
                 ds = ds.chunk(chunks)
 
             encoding = self._get_encoding(ds, chunks)
+
+            output_path = (
+                self.processed_data_path / output_path
+                if self.processed_data_path
+                else Path(output_path)
+            )
 
             logger.info(
                 f"Writing consolidated Zarr with chunks: {chunks}"
@@ -280,8 +299,6 @@ class NetCDFToZarrConverter:
                 f"Successfully created consolidated Zarr at {output_path}"
             )
 
-            self._print_zarr_info(output_path)
-
         except Exception as e:
             logger.error(f"Error during conversion: {str(e)}")
             raise
@@ -294,8 +311,8 @@ class NetCDFToZarrConverter:
     ):
         """Convert each NetCDF file to a separate Zarr store"""
 
-        files = sorted(Path().glob(file_pattern))
-        output_path = Path(output_dir)
+        files = sorted(self.raw_data_path.glob(file_pattern))
+        output_path = Path(self.processed_data_path) / output_dir
         output_path.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Converting {len(files)} files individually")
@@ -334,6 +351,13 @@ class NetCDFToZarrConverter:
 
     def _print_zarr_info(self, zarr_path: str):
         """Print information about the created Zarr store"""
+
+        zarr_path = (
+            self.processed_data_path / zarr_path
+            if self.processed_data_path
+            and not Path(zarr_path).is_absolute()
+            else Path(zarr_path)
+        )
 
         z = zarr.open(zarr_path, mode="r")
         logger.info(f"\n{'=' * 60}")

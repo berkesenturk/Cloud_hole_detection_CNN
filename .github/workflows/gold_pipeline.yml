@@ -1,0 +1,34 @@
+name: Gold Data Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  gold-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install azure-storage-file-datalake
+          # Add requirements for your generation script here
+
+      - name: Generate Gold Data
+        # Replace this with the command to run your script
+        run: python your_generation_script.py --output ./gold_data
+
+      - name: Upload to Gold Container
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+        run: |
+          # Usage: python upload_zarr.py <source_folder> <container_name>
+          python upload_zarr.py ./gold_data gold-container
