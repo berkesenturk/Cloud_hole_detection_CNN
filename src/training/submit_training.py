@@ -13,7 +13,7 @@ ml_client = MLClient(
 
 # Submit training job
 job = command(
-    code="./src",
+    code="./src/training",  # Path to training code
     command="""
         python train_azure.py
         --data_path ${{inputs.dataset}}

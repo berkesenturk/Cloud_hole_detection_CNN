@@ -154,7 +154,7 @@ def train_model(
                 },
                 save_dir / f"checkpoint_epoch_{epoch+1}.pth",
             )
-            print(f"✓ Checkpoint saved: checkpoint_epoch_{epoch+1}.pth")
+            print(f" Checkpoint saved: checkpoint_epoch_{epoch+1}.pth")
 
         print(f"Epochs without improvement: {epochs_without_improvement}/{patience}\n")
 
@@ -181,9 +181,9 @@ def train_model(
     with open(save_dir / "training_history.json", "w") as f:
         json.dump(history, f, indent=2)
 
-    print("\n✓ Training complete!")
-    print(f'✓ Best model saved to: {save_dir / "best_model.pth"}')
-    print(f'✓ Best validation F1: {best_val_f1:.4f} (epoch {best_epoch+1})')
+    print("\n Training complete!")
+    print(f' Best model saved to: {save_dir / "best_model.pth"}')
+    print(f' Best validation F1: {best_val_f1:.4f} (epoch {best_epoch+1})')
 
     return history
 
@@ -497,7 +497,7 @@ def test(model, test_loader, criterion, device, save_path=None, run=None):
         with open(save_path, "w") as f:
             json.dump(metrics_to_save, f, indent=2)
 
-        print(f"✓ Test results saved to: {save_path}")
+        print(f" Test results saved to: {save_path}")
 
     return metrics
 
@@ -569,7 +569,7 @@ def main():
         model="resnet18",
     )
 
-    print("\n✓ Datasets loaded")
+    print("\n Datasets loaded")
     print(f"  Train: {len(train_dataset)} samples")
     print(f"  Val:   {len(val_dataset)} samples")
     print(f"  Test:  {len(test_dataset)} samples\n")
@@ -612,8 +612,8 @@ def main():
         num_features = model.fc.in_features
         model.fc = nn.Linear(num_features, 2)
 
-        print("✓ Backbone frozen")
-        print("✓ Classification head (fc layer) unfrozen\n")
+        print(" Backbone frozen")
+        print(" Classification head (fc layer) unfrozen\n")
 
         # Verify trainable parameters
         trainable_params = sum(
@@ -637,7 +637,7 @@ def main():
         num_features = model.fc.in_features
         model.fc = nn.Linear(num_features, 2)
 
-        print("✓ Training entire model (no frozen layers)\n")
+        print(" Training entire model (no frozen layers)\n")
 
         optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
 
@@ -673,7 +673,7 @@ def main():
     print("\nLoading best model for testing...")
     checkpoint = torch.load(model_save_path / "best_model.pth")
     model.load_state_dict(checkpoint["model_state_dict"])
-    print(f'✓ Loaded best model from epoch {checkpoint["epoch"]+1}')
+    print(f' Loaded best model from epoch {checkpoint["epoch"]+1}')
 
     # Test
     test_metrics = test(
@@ -709,7 +709,7 @@ def main():
                     "test_roc_auc": test_metrics["roc_auc"],
                 },
             )
-            print("✓ Model registered to Azure ML")
+            print(" Model registered to Azure ML")
         except Exception as e:
             print(f"⚠ Could not register model: {e}")
 
