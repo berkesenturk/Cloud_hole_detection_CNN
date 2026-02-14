@@ -12,6 +12,6 @@ inputs:
   dataset:
     type: uri_folder
     path: azureml://datastores/gold/paths/datasets/v1.0_baseline
-environment: azureml:cloud-detector-env:1
-compute: azureml:gpu-cluster
+environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cpu@latest
+compute: azureml:test-cloudhole-cluster
 display_name: cloud-hole-training

@@ -1,7 +1,7 @@
 name: Gold Data Pipeline
 
 on:
-  workflow_dispatch: # Allows manual trigger
+  # workflow_dispatch: # Allows manual trigger
   push:
     branches: [ "main" ]
 

@@ -27,12 +27,15 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Install Azure ML CLI
+      
+      - name: Install latest Azure CLI
         run: |
-          az upgrade -y
-          az extension add -n ml -y
-          az extension update -n ml
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      - name: Install Azure ML extension
+        run: |
+          az extension remove -n ml || true
+          az extension add -n ml --yes
 
           az version
           az extension show -n ml
