@@ -32,7 +32,7 @@ jobs:
         run: |
           az upgrade -y
           az extension add -n ml -y
-          az extension update -n ml -y
+          az extension update -n ml
 
           az version
           az extension show -n ml
