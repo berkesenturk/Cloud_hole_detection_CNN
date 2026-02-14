@@ -1,7 +1,7 @@
 name: Silver Data Pipeline
 
-on:
-  workflow_dispatch: # Allows manual trigger
+on: # this should change to when there is a new version of processed data
+  #workflow_dispatch: # Allows manual trigger
   push:
     branches: [ "main" ]
 
