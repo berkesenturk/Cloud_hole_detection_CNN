@@ -14,7 +14,9 @@ jobs:
   train-model:
     name: Submit Azure ML Training Job
     runs-on: ubuntu-latest
-    
+    environment:
+      name: "development"
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
