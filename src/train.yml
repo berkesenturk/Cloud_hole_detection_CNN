@@ -11,7 +11,7 @@ command: >-
 inputs:
   dataset:
     type: uri_folder
-    path: azureml://datastores/gold/paths/datasets/v1.0_baseline
+    path: https://cloudholedetec8980605995.blob.core.windows.net/gold/dataset_versions/v1.0_baseline_no_augmentation
 environment: azureml:cloud-detector-env:1
-compute: azureml:gpu-cluster
+compute: azureml:test-cloudhole-cluster
 display_name: cloud-hole-training

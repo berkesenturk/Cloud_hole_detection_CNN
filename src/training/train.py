@@ -36,7 +36,6 @@ from sklearn.metrics import (
 from torchvision.models import resnet18
 from src.data.datasets import CloudHoleDataset
 
-# Try to import Azure ML (optional - only needed in Azure)
 try:
     from azureml.core import Run
 
@@ -191,7 +190,9 @@ def train_model(
 
 def parse_args():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description="Train Cloud Hole Detection Model")
+    parser = argparse.ArgumentParser(
+        description="Train Cloud Hole Detection Model"
+    )
 
     # Data paths
     parser.add_argument(
@@ -718,3 +719,7 @@ def main():
     print(f"Best model: {model_save_path}/best_model.pth")
     print(f"Test results: {logs_path}/test_results.json")
     print("=" * 80 + "\n")
+
+
+if __name__ == "__main__":
+    main()

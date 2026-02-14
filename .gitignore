@@ -6,11 +6,10 @@ __pycache__/
 # Pytorch models
 *.pt
 *.pth
-*.nc
+
 
 julia_labels.csv
 paris_label.txt
-*.zarr
 
 # C extensions
 *.so
