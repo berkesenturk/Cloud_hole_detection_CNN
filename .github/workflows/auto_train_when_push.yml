@@ -1,6 +1,7 @@
 name: Train Cloud Hole Detection Model
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
 
@@ -29,7 +30,12 @@ jobs:
 
       - name: Install Azure ML CLI
         run: |
+          az upgrade -y
           az extension add -n ml -y
+          az extension update -n ml -y
+
+          az version
+          az extension show -n ml
 
       - name: Run training job
         run: |
