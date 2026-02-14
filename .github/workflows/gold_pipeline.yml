@@ -1,9 +1,9 @@
 name: Gold Data Pipeline
 
 on:
-  # workflow_dispatch: # Allows manual trigger
-  push:
-    branches: [ "main" ]
+  workflow_dispatch: # Allows manual trigger
+  # push:
+    # branches: [ "main" ]
 
 env:
   source_folder: "data/processed/seviri" # Local folder containing gold data
