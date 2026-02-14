@@ -1,9 +1,9 @@
 name: Silver Data Pipeline
 
 on: # this should change to when there is a new version of processed data
-  #workflow_dispatch: # Allows manual trigger
-  push:
-    branches: [ "main" ]
+  workflow_dispatch: # Allows manual trigger
+  # push:
+    # branches: [ "main" ]
 
 env:
   raw_source_folder: "data/raw/seviri" # Local folder containing raw data
