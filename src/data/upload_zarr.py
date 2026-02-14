@@ -1,6 +1,10 @@
 import os
 import sys
 from azure.storage.filedatalake import DataLakeServiceClient
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 def upload_to_datalake(source_dir, container_name, connection_string):

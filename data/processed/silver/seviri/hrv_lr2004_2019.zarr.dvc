@@ -1,0 +1,6 @@
+outs:
+- md5: 40aa263e2ac446f65fa3e81907a58713.dir
+  size: 1313343937
+  nfiles: 218
+  hash: md5
+  path: hrv_lr2004_2019.zarr
