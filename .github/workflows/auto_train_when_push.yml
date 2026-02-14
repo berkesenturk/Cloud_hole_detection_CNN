@@ -28,32 +28,24 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Install latest Azure CLI
-        run: |
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-      - name: Reset Azure cloud profile
-        run: |
-          az cloud set -n AzureCloud
-          az cloud update
-
+      # FIX 1: Install specific version of Azure ML extension
       - name: Install Azure ML extension
         run: |
           az extension remove -n ml || true
-          az extension add -n ml --yes
-
+          az extension add -n ml --version 2.22.0 --yes
           az version
-          az extension show -n ml
 
-      - name: Register ML resource provider
-        run: |
-          az provider register --namespace Microsoft.MachineLearningServices
-
-      - name: Run training job
+      # FIX 2: Set subscription before running job
+      - name: Set Azure subscription
         run: |
           az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+          az account show
+
+      # FIX 3: Run training job with correct parameters
+      - name: Run training job
+        run: |
           az ml job create \
             --file src/train_job.yml \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --workspace-name "$AZURE_ML_WORKSPACE" \
-            --stream
+            --subscription "$AZURE_SUBSCRIPTION_ID"
