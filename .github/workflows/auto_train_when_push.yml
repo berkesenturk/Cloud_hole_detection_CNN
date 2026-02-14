@@ -32,6 +32,11 @@ jobs:
         run: |
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
+      - name: Reset Azure cloud profile
+        run: |
+          az cloud set -n AzureCloud
+          az cloud update
+
       - name: Install Azure ML extension
         run: |
           az extension remove -n ml || true
@@ -39,6 +44,10 @@ jobs:
 
           az version
           az extension show -n ml
+
+      - name: Register ML resource provider
+        run: |
+          az provider register --namespace Microsoft.MachineLearningServices
 
       - name: Run training job
         run: |
