@@ -266,11 +266,6 @@ class NetCDFToZarrConverter:
 
             encoding = self._get_encoding(ds, chunks)
 
-            output_path = (
-                self.processed_data_path / output_path
-                if self.processed_data_path
-                else Path(output_path)
-            )
 
             logger.info(
                 f"Writing consolidated Zarr with chunks: {chunks}"

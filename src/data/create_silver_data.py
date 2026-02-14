@@ -68,10 +68,6 @@ def main():
         custom_chunks=chunk_analysis["recommended_chunks"]
     )
 
-# -------------------------------------------------
-# Entry point
-# -------------------------------------------------
-
 
 if __name__ == "__main__":
     main()

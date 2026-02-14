@@ -1,0 +1,17 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+code: ./src
+command: >-
+  python train_azure.py
+  --data_path ${{inputs.dataset}}
+  --freeze_backbone
+  --epochs 50
+  --batch_size 32
+  --learning_rate 0.001
+  --augment
+inputs:
+  dataset:
+    type: uri_folder
+    path: azureml://datastores/gold/paths/datasets/v1.0_baseline
+environment: azureml:cloud-detector-env:1
+compute: azureml:gpu-cluster
+display_name: cloud-hole-training
